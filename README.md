@@ -1,4 +1,4 @@
-Proof of DNA Mutation using Groth16 ZK Proof
+# Proof of DNA Mutation using Groth16 ZK Proof
 
 https://ronantakizawa.github.io/ZKDNA/
 

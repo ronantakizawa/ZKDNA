@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+  <title>Proof of DNA Mutation</title>
+</head>
+<body>
+
+  <h1>Proof of DNA Mutation</h1>
+  <p>This ZK proof system proves that a DNA sequence has undergone a specific mutation at a specified position without revealing other details of the sequence.</p>
+
+  <h3>Input Explanations:</h3>
+  <ul>
+    <li><strong>S_ref</strong>: This is the original DNA sequence, represented as an array of 10 integers. Each number corresponds to a specific nucleotide.</li>
+    <li><strong>N</strong>: This is the mutation position in the DNA sequence, given as a zero-based index from 0 to 9. It indicates where the mutation occurs.</li>
+    <li><strong>M</strong>: This is the mutated nucleotide value. At position <code>N</code>, the original nucleotide is replaced with this value.</li>
+    <li><strong>S_mut</strong>: This is the mutated DNA sequence. It should be identical to <code>S_ref</code> except at the mutation position <code>N</code>, where the value should equal <code>M</code>.</li>
+  </ul>
+
+  <h3>What the Numbers Represent in DNA:</h3>
+  <p>In this setup, the numbers <code>0</code>, <code>1</code>, <code>2</code>, and <code>3</code> represent different nucleotides in a simplified DNA model:</p>
+  <ul>
+    <li><strong>0</strong>: Adenine (A)</li>
+    <li><strong>1</strong>: Thymine (T)</li>
+    <li><strong>2</strong>: Cytosine (C)</li>
+    <li><strong>3</strong>: Guanine (G)</li>
+  </ul>
+  <p>Other integers can also be used, but in this example, the values <code>0</code> to <code>3</code> serve as a basic encoding for each of the four primary DNA bases.</p>
+
+  <h3>Why Some Input Combinations Do Not Produce Valid ZK Proofs:</h3>
+  <p>For a ZK proof to be valid in this circuit, the following conditions must be met:</p>
+  <ul>
+    <li><strong>Sequence Length Consistency</strong>: Both <code>S_ref</code> and <code>S_mut</code> must contain exactly 10 elements. Any other length will cause the proof to be invalid.</li>
+    <li><strong>Mutation Consistency</strong>: The value at position <code>N</code> in <code>S_mut</code> must match <code>M</code>. For all other positions, <code>S_mut</code> should be identical to <code>S_ref</code>. If any other elements differ, the proof will be invalid.</li>
+    <li><strong>Mutation Position</strong>: The index <code>N</code> must be within the range <code>0</code> to <code>9</code> (inclusive). Any value outside this range will cause an error since it doesn't align with the 10-element sequence structure.</li>
+    <li><strong>Nucleotide Encoding</strong>: Although not strictly necessary, using only values <code>0</code>, <code>1</code>, <code>2</code>, and <code>3</code> for <code>S_ref</code> and <code>S_mut</code> maintains consistency with the DNA encoding. If other numbers are used without consistent rules, the meaning of the proof may become ambiguous.</li>
+  </ul>
+
+  <p>By following these constraints, the ZK proof verifies that a valid mutation has occurred in <code>S_mut</code> at position <code>N</code>, with <code>S_ref</code> remaining identical otherwise, ensuring DNA sequence integrity for all non-mutated positions.</p>
+
+  <hr>
+
+  <!-- Input Fields for ZK Proof -->
+  <label for="S_ref">S_ref (Comma-separated, length 10):</label>
+  <input type="text" id="S_ref" value="1,1,1,1,1,1,1,1,1,1"><br>
+
+  <label for="N">N (Mutation Position):</label>
+  <input type="number" id="N" value="3"><br>
+
+  <label for="M">M (Mutated Nucleotide Value):</label>
+  <input type="number" id="M" value="2"><br>
+
+  <label for="S_mut">S_mut (Comma-separated, length 10):</label>
+  <input type="text" id="S_mut" value="1,1,1,2,1,1,1,1,1,1"><br>
+
+  <button id="bGenProof">Create Proof</button>
+
+  <pre class="proof">Proof: <code id="proof"></code></pre>
+  <pre class="proof">Result: <code id="result"></code></pre>
+  <pre class="error">Error: <code id="error"></code></pre>
+
+  <!-- Examples and Explanation Section -->
+  <h2>Examples</h2>
+  <div id="examples">
+    <p><strong>Example 1:</strong> {"S_ref": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "N": 3, "M": 2, "S_mut": [1, 1, 1, 2, 1, 1, 1, 1, 1, 1]}</p>
+    <p><strong>Example 2:</strong> {"S_ref": [0, 1, 1, 1, 1, 1, 1, 1, 1, 1], "N": 0, "M": 3, "S_mut": [3, 1, 1, 1, 1, 1, 1, 1, 1, 1]}</p>
+    <p><strong>Example 3:</strong> {"S_ref": [4, 4, 4, 4, 4, 4, 4, 4, 4, 4], "N": 5, "M": 7, "S_mut": [4, 4, 4, 4, 4, 7, 4, 4, 4, 4]}</p>
+    <p><strong>Example 4:</strong> {"S_ref": [2, 3, 2, 3, 2, 3, 2, 3, 2, 3], "N": 7, "M": 5, "S_mut": [2, 3, 2, 3, 2, 3, 2, 5, 2, 3]}</p>
+    <p><strong>Example 5:</strong> {"S_ref": [5, 5, 5, 5, 5, 5, 5, 5, 5, 5], "N": 4, "M": 9, "S_mut": [5, 5, 5, 5, 9, 5, 5, 5, 5, 5]}</p>
+  </div>
+
+  <script src="snarkjs.min.js"></script>
+
+  <script>
+    const proofComponent = document.getElementById('proof');
+    const resultComponent = document.getElementById('result');
+    const errorComponent = document.getElementById('error');
+    const bGenProof = document.getElementById("bGenProof");
+
+    bGenProof.addEventListener("click", calculateProof);
+
+    async function calculateProof() {
+      // Clear previous output
+      proofComponent.innerHTML = "";
+      resultComponent.innerHTML = "";
+      errorComponent.innerHTML = "";
+
+      try {
+        // Get user inputs
+        const S_ref = document.getElementById("S_ref").value.split(',').map(Number);
+        const N = parseInt(document.getElementById("N").value, 10);
+        const M = parseInt(document.getElementById("M").value, 10);
+        const S_mut = document.getElementById("S_mut").value.split(',').map(Number);
+
+        // Input validation
+        if (S_ref.length !== 10 || S_mut.length !== 10) {
+          throw new Error("S_ref and S_mut must each have exactly 10 values.");
+        }
+
+        // Generate proof
+        const { proof, publicSignals } = await snarkjs.groth16.fullProve(
+          { S_ref, N, M, S_mut },
+          "circuit.wasm",
+          "circuit_final.zkey"
+        );
+
+        // Display proof
+        proofComponent.innerHTML = JSON.stringify(proof, null, 1);
+
+        // Fetch and parse verification key
+        const vkey = await fetch("verification_key.json").then(res => res.json());
+
+        // Verify proof
+        const isValid = await snarkjs.groth16.verify(vkey, publicSignals, proof);
+        
+        resultComponent.innerHTML = isValid ? "Proof is valid." : "Proof is invalid.";
+        return isValid;
+
+      } catch (error) {
+        // Display error and return false
+        errorComponent.innerHTML = error.message || "An unknown error occurred.";
+        return false;
+      }
+    }
+  </script>
+
+</body>
+</html>

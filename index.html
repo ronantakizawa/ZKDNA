@@ -2,80 +2,135 @@
 <html>
 <head>
   <title>Proof of DNA Mutation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input[type="file"], input[type="number"] {
+      margin-bottom: 10px;
+      width: 300px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+    }
+    pre {
+      background-color: #f4f4f4;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    .error {
+      color: red;
+    }
+    .proof, .result {
+      margin-top: 20px;
+    }
+    #examples pre {
+      background-color: #eef;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
 
   <h1>Proof of DNA Mutation</h1>
-  <p>This ZK proof system proves that a DNA sequence has undergone a specific mutation at a specified position without revealing other details of the sequence.</p>
+  <p>
+    This Zero-Knowledge Proof (ZKP) system verifies that a DNA sequence has undergone a specific mutation at a designated position without revealing any other details of the sequence.
+  </p>
 
   <h3>Input Explanations:</h3>
   <ul>
-    <li><strong>S_ref</strong>: This is the original DNA sequence, represented as an array of 10 integers. Each number corresponds to a specific nucleotide.</li>
-    <li><strong>N</strong>: This is the mutation position in the DNA sequence, given as a zero-based index from 0 to 9. It indicates where the mutation occurs.</li>
-    <li><strong>M</strong>: This is the mutated nucleotide value. At position <code>N</code>, the original nucleotide is replaced with this value.</li>
-    <li><strong>S_mut</strong>: This is the mutated DNA sequence. It should be identical to <code>S_ref</code> except at the mutation position <code>N</code>, where the value should equal <code>M</code>.</li>
+    <li><strong>S_refFile</strong>: The original DNA sequence file in FASTA format.</li>
+    <li><strong>S_mutFile</strong>: The mutated DNA sequence file in FASTA format.</li>
+    <li><strong>N</strong>: The mutation position (zero-based index) indicating where the mutation occurs.</li>
+    <li><strong>M</strong>: The mutated nucleotide value represented as an integer:
+      <ul>
+        <li><strong>0</strong>: Adenine (A)</li>
+        <li><strong>1</strong>: Thymine (T)</li>
+        <li><strong>2</strong>: Cytosine (C)</li>
+        <li><strong>3</strong>: Guanine (G)</li>
+      </ul>
+    </li>
   </ul>
 
-  <h3>What the Numbers Represent in DNA:</h3>
-  <p>In this setup, the numbers <code>0</code>, <code>1</code>, <code>2</code>, and <code>3</code> represent different nucleotides in a simplified DNA model:</p>
-  <ul>
-    <li><strong>0</strong>: Adenine (A)</li>
-    <li><strong>1</strong>: Thymine (T)</li>
-    <li><strong>2</strong>: Cytosine (C)</li>
-    <li><strong>3</strong>: Guanine (G)</li>
-  </ul>
-  <p>Other integers can also be used, but in this example, the values <code>0</code> to <code>3</code> serve as a basic encoding for each of the four primary DNA bases.</p>
+  <h3>Upload DNA Sequences:</h3>
+  <label for="S_refFile">Upload S_ref File (FASTA format):</label>
+  <input type="file" id="S_refFile" accept=".fasta,.fa"><br>
 
-  <h3>Why Some Input Combinations Do Not Produce Valid ZK Proofs:</h3>
-  <p>For a ZK proof to be valid in this circuit, the following conditions must be met:</p>
-  <ul>
-    <li><strong>Sequence Length Consistency</strong>: Both <code>S_ref</code> and <code>S_mut</code> must contain exactly 10 elements. Any other length will cause the proof to be invalid.</li>
-    <li><strong>Mutation Consistency</strong>: The value at position <code>N</code> in <code>S_mut</code> must match <code>M</code>. For all other positions, <code>S_mut</code> should be identical to <code>S_ref</code>. If any other elements differ, the proof will be invalid.</li>
-    <li><strong>Mutation Position</strong>: The index <code>N</code> must be within the range <code>0</code> to <code>9</code> (inclusive). Any value outside this range will cause an error since it doesn't align with the 10-element sequence structure.</li>
-    <li><strong>Nucleotide Encoding</strong>: Although not strictly necessary, using only values <code>0</code>, <code>1</code>, <code>2</code>, and <code>3</code> for <code>S_ref</code> and <code>S_mut</code> maintains consistency with the DNA encoding. If other numbers are used without consistent rules, the meaning of the proof may become ambiguous.</li>
-  </ul>
-
-  <p>By following these constraints, the ZK proof verifies that a valid mutation has occurred in <code>S_mut</code> at position <code>N</code>, with <code>S_ref</code> remaining identical otherwise, ensuring DNA sequence integrity for all non-mutated positions.</p>
-
-  <hr>
-
-  <!-- Input Fields for ZK Proof -->
-  <label for="S_ref">S_ref (Comma-separated, length 10):</label>
-  <input type="text" id="S_ref" value="1,1,1,1,1,1,1,1,1,1"><br>
+  <label for="S_mutFile">Upload S_mut File (FASTA format):</label>
+  <input type="file" id="S_mutFile" accept=".fasta,.fa"><br>
 
   <label for="N">N (Mutation Position):</label>
-  <input type="number" id="N" value="3"><br>
+  <input type="number" id="N" min="0" value="8"><br>
 
   <label for="M">M (Mutated Nucleotide Value):</label>
-  <input type="number" id="M" value="2"><br>
-
-  <label for="S_mut">S_mut (Comma-separated, length 10):</label>
-  <input type="text" id="S_mut" value="1,1,1,2,1,1,1,1,1,1"><br>
+  <input type="number" id="M" min="0" max="3" value="2"><br>
 
   <button id="bGenProof">Create Proof</button>
 
-  <pre class="proof">Proof: <code id="proof"></code></pre>
-  <pre class="proof">Result: <code id="result"></code></pre>
-  <pre class="error">Error: <code id="error"></code></pre>
+  <div class="proof">
+    <h3>Proof:</h3>
+    <pre><code id="proof"></code></pre>
+  </div>
+  <div class="result">
+    <h3>Result:</h3>
+    <pre><code id="result"></code></pre>
+  </div>
+  <div class="error">
+    <h3>Error:</h3>
+    <pre><code id="error"></code></pre>
+  </div>
 
   <!-- Examples and Explanation Section -->
   <h2>Examples</h2>
   <div id="examples">
-    <p><strong>Example 1:</strong> {"S_ref": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "N": 3, "M": 2, "S_mut": [1, 1, 1, 2, 1, 1, 1, 1, 1, 1]}</p>
-    <p><strong>Example 2:</strong> {"S_ref": [0, 1, 1, 1, 1, 1, 1, 1, 1, 1], "N": 0, "M": 3, "S_mut": [3, 1, 1, 1, 1, 1, 1, 1, 1, 1]}</p>
-    <p><strong>Example 3:</strong> {"S_ref": [4, 4, 4, 4, 4, 4, 4, 4, 4, 4], "N": 5, "M": 7, "S_mut": [4, 4, 4, 4, 4, 7, 4, 4, 4, 4]}</p>
-    <p><strong>Example 4:</strong> {"S_ref": [2, 3, 2, 3, 2, 3, 2, 3, 2, 3], "N": 7, "M": 5, "S_mut": [2, 3, 2, 3, 2, 3, 2, 5, 2, 3]}</p>
-    <p><strong>Example 5:</strong> {"S_ref": [5, 5, 5, 5, 5, 5, 5, 5, 5, 5], "N": 4, "M": 9, "S_mut": [5, 5, 5, 5, 9, 5, 5, 5, 5, 5]}</p>
+    <h3>Example FASTA Files:</h3>
+    <p><strong>Example S_ref.fasta:</strong></p>
+    <pre>
+>Sequence_1
+ATCGATCGAT
+    </pre>
+    <p><strong>Example S_mut.fasta:</strong></p>
+    <pre>
+>Sequence_1
+ATCGATCGCT
+    </pre>
+    <p><strong>Mutation Details:</strong></p>
+    <ul>
+      <li><strong>N</strong>: 8 (zero-based index)</li>
+      <li><strong>M</strong>: 2 (Cytosine)</li>
+    </ul>
   </div>
 
+  <!-- Include snarkjs library -->
   <script src="snarkjs.min.js"></script>
 
   <script>
+    // Select DOM elements
     const proofComponent = document.getElementById('proof');
     const resultComponent = document.getElementById('result');
     const errorComponent = document.getElementById('error');
     const bGenProof = document.getElementById("bGenProof");
 
+    // Nucleotide mapping
+    const nucleotideMap = {
+      'A': 0,
+      'T': 1,
+      'C': 2,
+      'G': 3
+    };
+
+    // Reverse mapping (for debugging/display purposes)
+    const reverseNucleotideMap = ['A', 'T', 'C', 'G'];
+
+    // Add event listener to the button
     bGenProof.addEventListener("click", calculateProof);
 
     async function calculateProof() {
@@ -84,42 +139,186 @@
       resultComponent.innerHTML = "";
       errorComponent.innerHTML = "";
 
+      console.log("Starting proof generation process...");
+
       try {
-        // Get user inputs
-        const S_ref = document.getElementById("S_ref").value.split(',').map(Number);
+        // Get file inputs
+        const S_refFile = document.getElementById("S_refFile").files[0];
+        const S_mutFile = document.getElementById("S_mutFile").files[0];
         const N = parseInt(document.getElementById("N").value, 10);
         const M = parseInt(document.getElementById("M").value, 10);
-        const S_mut = document.getElementById("S_mut").value.split(',').map(Number);
+
+        console.log("Uploaded Files:", S_refFile, S_mutFile);
+        console.log("Mutation Position (N):", N);
+        console.log("Mutated Nucleotide Value (M):", M);
+
+        if (!S_refFile || !S_mutFile) {
+          throw new Error("Both S_ref and S_mut FASTA files must be uploaded.");
+        }
+
+        // Read files
+        const readFile = file => new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            console.log(`Successfully read file: ${file.name}`);
+            resolve(reader.result);
+          };
+          reader.onerror = () => {
+            console.error(`Error reading file: ${file.name}`);
+            reject(`Error reading file: ${file.name}`);
+          };
+          reader.readAsText(file);
+        });
+
+        const [S_refContent, S_mutContent] = await Promise.all([
+          readFile(S_refFile),
+          readFile(S_mutFile)
+        ]);
+
+        console.log("S_ref Content:", S_refContent);
+        console.log("S_mut Content:", S_mutContent);
+
+        // Parse FASTA files
+        const S_refSequences = parseFASTA(S_refContent);
+        const S_mutSequences = parseFASTA(S_mutContent);
+
+        console.log("Parsed S_ref Sequences:", S_refSequences);
+        console.log("Parsed S_mut Sequences:", S_mutSequences);
+
+        if (S_refSequences.length !== 1 || S_mutSequences.length !== 1) {
+          throw new Error("Each FASTA file must contain exactly one sequence.");
+        }
+
+        // Convert nucleotides to integers with detailed logging
+        const S_ref = [];
+        S_refSequences[0].split('').forEach((nuc, index) => {
+          if (!(nuc in nucleotideMap)) {
+            throw new Error(`Invalid nucleotide '${nuc}' at position ${index} in S_ref sequence.`);
+          }
+          const mappedValue = nucleotideMap[nuc];
+          S_ref.push(mappedValue);
+          console.log(`S_ref[${index}]: '${nuc}' → ${mappedValue}`);
+        });
+
+        const S_mut = [];
+        S_mutSequences[0].split('').forEach((nuc, index) => {
+          if (!(nuc in nucleotideMap)) {
+            throw new Error(`Invalid nucleotide '${nuc}' at position ${index} in S_mut sequence.`);
+          }
+          const mappedValue = nucleotideMap[nuc];
+          S_mut.push(mappedValue);
+          console.log(`S_mut[${index}]: '${nuc}' → ${mappedValue}`);
+        });
+
+        console.log("Encoded S_ref:", S_ref);
+        console.log("Encoded S_mut:", S_mut);
 
         // Input validation
-        if (S_ref.length !== 10 || S_mut.length !== 10) {
-          throw new Error("S_ref and S_mut must each have exactly 10 values.");
+        if (S_ref.length !== S_mut.length) {
+          throw new Error("S_ref and S_mut sequences must be of the same length.");
+        }
+
+        const mutationPosition = N;
+        if (mutationPosition < 0 || mutationPosition >= S_ref.length) {
+          throw new Error("Mutation position N is out of range.");
+        }
+
+        if (S_mut[mutationPosition] !== M) {
+          throw new Error("Mutated nucleotide M does not match the value at position N in S_mut.");
+        }
+
+        console.log(`Mutation at position ${mutationPosition}: S_ref=${reverseNucleotideMap[S_ref[mutationPosition]]} (${S_ref[mutationPosition]}), S_mut=${reverseNucleotideMap[S_mut[mutationPosition]]} (${S_mut[mutationPosition]})`);
+
+        // Ensure only one mutation
+        let mutationCount = 0;
+        let mutationPositions = [];
+        for (let i = 0; i < S_ref.length; i++) {
+          if (S_ref[i] !== S_mut[i]) {
+            mutationCount++;
+            mutationPositions.push(i);
+            if (i !== mutationPosition) {
+              throw new Error(`Mutation found at position ${i}, which is not the specified position ${mutationPosition}.`);
+            }
+          }
+        }
+
+        console.log(`Total Mutations Found: ${mutationCount}`);
+        console.log(`Mutation Positions: ${mutationPositions}`);
+
+        if (mutationCount !== 1) {
+          throw new Error("There must be exactly one mutation between S_ref and S_mut.");
         }
 
         // Generate proof
+        console.log("Generating proof with snarkjs...");
+        console.log(S_ref);
+        console.log(N)
+        console.log(M)
+        console.log(S_mut)
         const { proof, publicSignals } = await snarkjs.groth16.fullProve(
           { S_ref, N, M, S_mut },
           "circuit.wasm",
           "circuit_final.zkey"
         );
 
+        console.log("Proof generated:", proof);
+        console.log("Public Signals:", publicSignals);
+
         // Display proof
-        proofComponent.innerHTML = JSON.stringify(proof, null, 1);
+        proofComponent.innerHTML = JSON.stringify(proof, null, 2);
 
         // Fetch and parse verification key
-        const vkey = await fetch("verification_key.json").then(res => res.json());
+        console.log("Fetching verification key...");
+        const vkeyResponse = await fetch("verification_key.json");
+        if (!vkeyResponse.ok) {
+          throw new Error("Failed to fetch verification key.");
+        }
+        const vkey = await vkeyResponse.json();
+        console.log("Verification Key:", vkey);
 
         // Verify proof
+        console.log("Verifying proof...");
         const isValid = await snarkjs.groth16.verify(vkey, publicSignals, proof);
-        
+
+        console.log("Proof verification result:", isValid);
         resultComponent.innerHTML = isValid ? "Proof is valid." : "Proof is invalid.";
+
         return isValid;
 
       } catch (error) {
+        console.error("Error during proof generation:", error);
         // Display error and return false
         errorComponent.innerHTML = error.message || "An unknown error occurred.";
         return false;
       }
+    }
+
+    // Function to parse FASTA content
+    function parseFASTA(content) {
+      console.log("Parsing FASTA content...");
+      const sequences = [];
+      const lines = content.split(/\r?\n/);
+      let currentSequence = '';
+
+      lines.forEach(line => {
+        if (line.startsWith('>')) {
+          if (currentSequence) {
+            sequences.push(currentSequence.toUpperCase());
+            console.log("Sequence added:", currentSequence.toUpperCase());
+            currentSequence = '';
+          }
+        } else {
+          currentSequence += line.trim();
+        }
+      });
+
+      if (currentSequence) {
+        sequences.push(currentSequence.toUpperCase());
+        console.log("Final sequence added:", currentSequence.toUpperCase());
+      }
+
+      console.log("Total sequences parsed:", sequences.length);
+      return sequences;
     }
   </script>
 
